@@ -13,6 +13,9 @@ router.post("/", async (req, res) => {
     const keys = Object.keys(body);
 
     if (keys.length !== 1) {
+      if (process.env.DEBUG_AI === "true") {
+        console.log("[AI DEBUG] Invalid number of keys:", keys);
+      }
       return res.status(400).json({
         is_success: false,
         official_email: process.env.OFFICIAL_EMAIL,
@@ -28,8 +31,18 @@ router.post("/", async (req, res) => {
     else if (key === "prime") data = filterPrimes(value);
     else if (key === "lcm") data = calcLCM(value);
     else if (key === "hcf") data = calcHCF(value);
-    else if (key === "AI") data = await askGemini(value);
-    else throw new Error("Invalid key");
+    else if (key === "AI") {
+      if (process.env.DEBUG_AI === "true") {
+        console.log("[AI DEBUG] AI key detected, value:", value);
+      }
+      data = await askGemini(value);
+    }
+    else {
+      if (process.env.DEBUG_AI === "true") {
+        console.log("[AI DEBUG] Invalid key:", key);
+      }
+      throw new Error("Invalid key");
+    }
 
     res.status(200).json({
       is_success: true,
@@ -37,6 +50,9 @@ router.post("/", async (req, res) => {
       data
     });
   } catch (e) {
+    if (process.env.DEBUG_AI === "true") {
+      console.log("[AI DEBUG] Error in /bfhl:", e);
+    }
     res.status(400).json({
       is_success: false,
       official_email: process.env.OFFICIAL_EMAIL,
